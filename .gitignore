@@ -31,6 +31,4 @@ Thumbs.db
 *.bak
 *.old
 
-echo "htmlcov/" >> .gitignore
-echo ".coverage" >> .gitignore
 
