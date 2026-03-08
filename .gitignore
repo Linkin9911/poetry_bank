@@ -30,3 +30,9 @@ Thumbs.db
 *.tmp
 *.bak
 *.old
+
+.pyc
+
+.pytest_cache
+
+htmlcov/
