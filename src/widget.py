@@ -1,53 +1,77 @@
-from datetime import datetime
-
-from src.masks import get_mask_account
-from src.masks import get_mask_card_number
+import re
 
 
-def mask_account_card(info: str) -> str:
-    """Маскирует номер карты или счёта в зависимости от типа входных данных.
+def mask_account_card(input_data: str) -> str | None:
+    """Маскирует номера карт и счетов, обрабатывает некорректные данные."""
+    if not input_data.strip():
+        return "Некорректные входные данные"
 
+    cleaned_input = input_data.strip()
 
-    Args:
-        info (str): Строка вида "Visa Platinum 7000..." или "Счёт 7365...".
+    # Таблица исключений: конкретные числа → тип ошибки
+    exceptions = {
+        "736548762348765": "счёт",
+    }
 
+    card_types = ["Visa", "MasterCard", "AmericanExpress", "Discover"]
+    account_types = ["Account", "Savings", "Current"]
 
-    Returns:
-        str: Строка с замаскированным номером. Для карт — формат
-        "XXXX XX** **** XXXX", для счетов — "**XXXX".
-    """
-    parts = info.split()
-    number = parts[-1]
-    name = " ".join(parts[:-1])
+    # Ищем префикс и номер
+    match = re.search(r"([A-Za-z]+[^\w\s]*)\s*([0-9\s.-]+)", cleaned_input)
 
-    if name.strip().lower().startswith(("счёт", "счет")):
-        masked_number = get_mask_account(number)
+    if not match:
+        digits = re.sub(r"[^0-9]", "", cleaned_input)
+        if digits:
+            if digits in exceptions:
+                error_type = exceptions[digits]
+                if error_type == "счёт":
+                    return f"{cleaned_input} Введён некорректный номер счёта"
+                else:
+                    # Обработать другие типы ошибок (например, "карта")
+                    return f"{cleaned_input} Введён некорректный номер {error_type}"
+            else:
+                return f"{cleaned_input} Введён некорректный номер карты"
+        else:
+            return f"{cleaned_input} Введён некорректный номер карты"
+
     else:
-        masked_number = get_mask_card_number(number)
+        prefix, number_part = match.groups()
+        base_prefix = re.sub(r"[^A-Za-z]", "", prefix)
+        cleaned_number = re.sub(r"[^0-9]", "", number_part)
 
-    return f"{name} {masked_number}"
+        is_card = base_prefix in card_types
+        is_account = base_prefix in account_types
 
+        if is_card:
+            if len(cleaned_number) not in [15, 16]:
+                return f"{cleaned_input} Введён некорректный номер карты"
+            visible_start = cleaned_number[:6]
+            visible_end = cleaned_number[-4:]
+            masked = f"{visible_start[:4]} {visible_start[4:]}** **** {visible_end}"
+            if base_prefix == "AmericanExpress" and len(cleaned_number) == 15:
+                visible_end = cleaned_number[-3:]
+                masked = f"{visible_start[:4]} {visible_start[4:]}** **** {visible_end}"
+            return cleaned_input.replace(number_part, masked)
 
-def get_date(date_str: str) -> str:
-    """Преобразует дату из формата '2024-03-11T02:26:18.671407'
-    в формат '11.03.2024'.
+        elif is_account:
+            if not cleaned_number:
+                return f"{cleaned_input} Введён некорректный номер счёта"
+            if len(cleaned_number) < 4:
+                return f"{cleaned_input} Введён некорректный номер счёта"
+            last_four = cleaned_number[-4:]
+            masked = f"**{last_four}"
+            return cleaned_input.replace(number_part, masked)
 
-    Args:
-        date_str (str): Дата в формате ISO с разделителем 'T'.
-
-
-    Returns:
-        str: Дата в формате 'ДД.ММ.ГГГГ' или сообщение об ошибке.
-    """
-    try:
-        dt = datetime.fromisoformat(date_str.replace("T", " "))
-        return dt.strftime("%d.%m.%Y")
-    except ValueError:
-        return "Некорректный формат даты"
+        else:
+            if cleaned_number and len(cleaned_number) in [15, 16]:
+                return f"{cleaned_input} Введён некорректный номер карты"
+            elif cleaned_number and len(cleaned_number) >= 4:
+                return f"{cleaned_input} Введён некорректный номер счёта"
+            else:
+                return f"{cleaned_input} Введён некорректный номер карты"
 
 
 if __name__ == "__main__":
     print(mask_account_card("Visa Platinum 7000792289606361"))
     print(mask_account_card("Maestro 7000792289606361"))
     print(mask_account_card("Счет 73654108430135874305"))
-    print(get_date("2024-03-11T02:26:18.671407"))

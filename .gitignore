@@ -31,8 +31,6 @@ Thumbs.db
 *.bak
 *.old
 
-.pyc
-
-.pytest_cache
+.coverage
 
 htmlcov/
