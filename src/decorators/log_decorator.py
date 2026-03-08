@@ -1,6 +1,9 @@
 import functools
 from datetime import datetime
-from typing import Callable, Optional, TypeVar, ParamSpec
+from typing import Callable
+from typing import Optional
+from typing import ParamSpec
+from typing import TypeVar
 
 # Определяем универсальные типы для сохранения сигнатуры функции
 P = ParamSpec("P")
@@ -14,6 +17,7 @@ def log(filename: Optional[str] = None) -> Callable[[Callable[P, R]], Callable[P
     Args:
         filename: Имя файла для записи логов. Если None — вывод в консоль.
     """
+
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
         @functools.wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
@@ -32,14 +36,16 @@ def log(filename: Optional[str] = None) -> Callable[[Callable[P, R]], Callable[P
                 log_entry = f"{log_message} error: {error_type}. {inputs}"
                 _write_log(log_entry, filename)
                 raise
+
         return wrapper
+
     return decorator
 
 
 def _write_log(message: str, filename: Optional[str]) -> None:
     """Записывает лог в файл или консоль."""
     if filename:
-        with open(filename, 'a', encoding='utf-8') as f:
-            f.write(message + '\n')
+        with open(filename, "a", encoding="utf-8") as f:
+            f.write(message + "\n")
     else:
         print(message)
