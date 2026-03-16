@@ -21,7 +21,7 @@ def convert_to_rubles(transaction: Dict[str, Union[str, float]]) -> float:
 
     # Параметры для API-запроса
     params = {
-        "access_key": "ваш_реальный_ключ",  # Замените на реальный ключ
+        "access_key": "LTUWdwz0RWzRoWVFERtduwV2pX2RqMXy",
         "from": currency,
         "to": "RUB",
         "amount": amount,
