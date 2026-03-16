@@ -1,40 +1,47 @@
 # src/external_api.py
-import os
 from typing import Dict
+from typing import Union
 
 import requests
-from dotenv import load_dotenv
-
-load_dotenv()
-
-API_KEY = os.getenv("EXCHANGE_API_KEY")
-BASE_URL = "https://api.exchangeratesapi.io/v1/latest"
 
 
-def convert_to_rubles(transaction: Dict) -> float:
-    """
-    Конвертирует сумму транзакции в рубли.
+def convert_to_rubles(transaction: Dict[str, Union[str, float]]) -> float:
+    amount = transaction["amount"]
+    currency = transaction["currency"]
 
-    Args:
-        transaction (Dict): Словарь с данными транзакции.
+    # Проверка типа перед вызовом upper()
+    if isinstance(currency, str):
+        if currency.upper() == "RUB":
+            return float(amount)
+    elif isinstance(currency, float):
+        # Если валюта передана как число — это ошибка
+        raise ValueError(f"Некорректный тип валюты: {type(currency)}. Ожидается str.")
+    else:
+        raise ValueError(f"Неподдерживаемый тип валюты: {type(currency)}")
 
-    Returns:
-        float: Сумма в рублях.
-    """
-    amount = transaction.get("amount", 0.0)
-    currency = transaction.get("currency", "RUB")
+    # Параметры для API-запроса
+    params = {
+        "access_key": "ваш_реальный_ключ",  # Замените на реальный ключ
+        "from": currency,
+        "to": "RUB",
+        "amount": amount,
+    }
 
-    if currency == "RUB":
-        return float(amount)
-
-    if currency not in ["USD", "EUR"]:
-        raise ValueError(f"Unsupported currency: {currency}")
+    url = "https://api.apilayer.com/exchangerates_data/convert"
 
     try:
-        response = requests.get(BASE_URL, params={"access_key": API_KEY, "base": currency, "symbols": "RUB"})
-        response.raise_for_status()
-        rates = response.json().get("rates", {})
-        rub_rate = rates.get("RUB", 1.0)
-        return float(amount * rub_rate)
-    except requests.RequestException:
-        raise ConnectionError("Failed to fetch exchange rates")
+        response = requests.get(url, params=params, timeout=10)
+
+        if response.status_code == 200:
+            data = response.json()
+            converted_amount = data.get("result")
+            if converted_amount is not None:
+                return float(converted_amount)
+            else:
+                raise ValueError('Поле "result" отсутствует в ответе API')
+        else:
+            error_msg = f"API вернул статус {response.status_code}: {response.text}"
+            raise requests.exceptions.RequestException(error_msg)
+    except requests.exceptions.RequestException as e:
+        print(f"Ошибка при запросе к API: {e}")
+        raise
