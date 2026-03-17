@@ -25,5 +25,5 @@ def read_json_file(file_path: str) -> List[Dict]:
                 return data
             else:
                 return []
-    except json.JSONDecodeError, IOError:
+    except (json.JSONDecodeError, IOError):
         return []
