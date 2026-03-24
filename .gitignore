@@ -36,3 +36,8 @@ Thumbs.db
 htmlcov/
 
 .env
+
+*.pyc
+*.pyo
+*.pyd
+.Python
