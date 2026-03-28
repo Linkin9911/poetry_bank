@@ -30,3 +30,14 @@ Thumbs.db
 *.tmp
 *.bak
 *.old
+
+.coverage
+
+htmlcov/
+
+.env
+
+*.pyc
+*.pyo
+*.pyd
+.Python

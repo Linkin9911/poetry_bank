@@ -1,0 +1,4 @@
+[
+  {"id": 1, "amount": 100, "description": "Покупка в магазине"},
+  {"id": 2, "amount": 250, "description": "Оплата услуг"}
+]
