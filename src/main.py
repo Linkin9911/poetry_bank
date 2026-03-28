@@ -25,7 +25,7 @@ def main() -> None:
 
     print("Программа: Для обработки выбран JSON-файл.")
 
-    # Загрузка данных (в реальной версии здесь будет выбор файла)
+    # Загрузка данных
     try:
         with open("../data.json", "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -33,40 +33,75 @@ def main() -> None:
         print("Файл data.json не найден. Создаю тестовые данные.")
         data = create_sample_data()
 
-    # Фильтрация по статусу
+    # Фильтрация по статусу с повторным запросом при ошибке
     valid_statuses = ["EXECUTED", "CANCELED", "PENDING"]
-    while True:
-        status = input("Пользователь: ").upper()
-        print(f"Программа: Операции отфильтрованы по статусу '{status}'")
-        print(f"Доступные для фильтровки статусы: {', '.join(valid_statuses)}")
+    status = None  # Инициализируем переменную заранее
 
-        if status in valid_statuses:
-            break
+    while status is None:
+        print(f"Программа: Доступные для фильтрации статусы: {', '.join(valid_statuses)}")
+        status_input = input("Программа: Введите статус операции: ").strip().upper()
+
+        if not status_input:  # Проверка на пустой ввод
+            print("Программа: Статус не может быть пустым. Попробуйте ещё раз.")
+            continue
+
+        if status_input in valid_statuses:
+            status = status_input
+            print(f"Программа: Операции отфильтрованы по статусу '{status}'")
         else:
-            print(f"Программа: Статус операции '{status}' недоступен.")
+            print(f"Программа: Статус операции '{status_input}' недоступен. " "Пожалуйста, выберите из списка выше.")
 
     filtered_data = filter_by_status(data, status)
-    print(f"Программа: Операции отфильтрованы по статусу '{status}'")
 
     # Сортировка по дате
-    sort_choice = input("Программа: Отсортировать операции по дате? Да/Нет\nПользователь: ").lower()
+    while True:
+        sort_choice = input("Программа: Отсортировать операции по дате? Да/Нет\nПользователь: ").strip().lower()
+        if sort_choice in ("да", "нет"):
+            break
+        print("Программа: Пожалуйста, введите 'Да' или 'Нет'.")
+
     if sort_choice == "да":
-        order = input("Программа: Отсортировать по возрастанию или по убыванию?\nПользователь: ").lower()
-        ascending = "возрастанию" in order
+        while True:
+            order = input("Программа: Отсортировать по возрастанию или по убыванию?\nПользователь: ").strip().lower()
+            if "возрастанию" in order:
+                ascending = True
+                break
+            elif "убыванию" in order:
+                ascending = False
+                break
+            else:
+                print("Программа: Пожалуйста, введите 'возрастанию' или 'убыванию'.")
         filtered_data = sort_by_date(filtered_data, ascending)
 
     # Фильтрация рублёвых транзакций
-    ruble_choice = input("Программа: Выводить только рублевые транзакции? Да/Нет\nПользователь: ").lower()
+    while True:
+        ruble_choice = input("Программа: Выводить только рублёвые транзакции? Да/Нет\nПользователь: ").strip().lower()
+        if ruble_choice in ("да", "нет"):
+            break
+        print("Программа: Пожалуйста, введите 'Да' или 'Нет'.")
+
     if ruble_choice == "да":
         filtered_data = filter_ruble_transactions(filtered_data)
 
     # Поиск по описанию
-    search_choice = input(
-        "Программа: Отфильтровать список транзакций по определённому слову в описании? Да/Нет\nПользователь: "
-    ).lower()
+    while True:
+        search_choice = (
+            input(
+                "Программа: Отфильтровать список транзакций по определённому слову в описании? Да/Нет\nПользователь: "
+            )
+            .strip()
+            .lower()
+        )
+        if search_choice in ("да", "нет"):
+            break
+        print("Программа: Пожалуйста, введите 'Да' или 'Нет'.")
+
     if search_choice == "да":
-        search_term = input("Введите слово для поиска: ")
-        filtered_data = process_bank_search(filtered_data, search_term)
+        search_term = input("Программа: Введите слово для поиска: ").strip()
+        if search_term:  # Только если введено непустое слово
+            filtered_data = process_bank_search(filtered_data, search_term)
+        else:
+            print("Программа: Слово для поиска не введено. Пропускаем фильтрацию.")
 
     # Вывод результата
     print("Программа: Распечатываю итоговый список транзакций...")
